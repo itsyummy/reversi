@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<title>オセロ！！！</title>
+<script src="./jquery-3.6.4.min.js"></script>
+</head>
+<style>
+table {
+    border-collapse: collapse;
+    
+}
+table td {
+    border:3px solid black;
+    font-size: 30px;
+    width: 50px;
+    height: 50px;
+    background-color: #008000;
+    text-align: center;
+    font-size: 33px;
+}
+table td.green:hover {
+    background-color: #4aa54a;
+    cursor: pointer;
+}
+table#black td.green:hover {
+    color: black;
+}
+table#white td.green:hover {
+    color: white;
+}
+.green {
+    color: green;
+}
+.black {
+    color: black;
+}
+.white {
+    color: white;
+}
+button {
+    display: inline-block;
+    margin-bottom: 10px;
+    padding: 3px 5px;
+}
+h3 {
+    margin: 10px 0;
+}
+</style>
+<body>
+<h3><span>黒</span>の番である</h3>
+<button type="button" name="btnPass">パス</button>
+<button type="button" name="btnJudge">判定</button>
+<table id="black">
+    <tr>
+        <td class='col1 line1'>●</td>
+        <td class='col1 line2'>●</td>
+        <td class='col1 line3'>●</td>
+        <td class='col1 line4'>●</td>
+        <td class='col1 line5'>●</td>
+        <td class='col1 line6'>●</td>
+    </tr>
+    <tr>
+        <td class='col2 line1'>●</td>
+        <td class='col2 line2'>●</td>
+        <td class='col2 line3'>●</td>
+        <td class='col2 line4'>●</td>
+        <td class='col2 line5'>●</td>
+        <td class='col2 line6'>●</td>
+    </tr>
+    <tr>
+        <td class='col3 line1'>●</td>
+        <td class='col3 line2'>●</td>
+        <td class='col3 line3'>●</td>
+        <td class='col3 line4'>●</td>
+        <td class='col3 line5'>●</td>
+        <td class='col3 line6'>●</td>
+    </tr>
+    <tr>
+        <td class='col4 line1'>●</td>
+        <td class='col4 line2'>●</td>
+        <td class='col4 line3'>●</td>
+        <td class='col4 line4'>●</td>
+        <td class='col4 line5'>●</td>
+        <td class='col4 line6'>●</td>
+    </tr>
+    <tr>
+        <td class='col5 line1'>●</td>
+        <td class='col5 line2'>●</td>
+        <td class='col5 line3'>●</td>
+        <td class='col5 line4'>●</td>
+        <td class='col5 line5'>●</td>
+        <td class='col5 line6'>●</td>
+    </tr>
+    <tr>
+        <td class='col6 line1'>●</td>
+        <td class='col6 line2'>●</td>
+        <td class='col6 line3'>●</td>
+        <td class='col6 line4'>●</td>
+        <td class='col6 line5'>●</td>
+        <td class='col6 line6'>●</td>
+    </tr>
+</table>
+<script>
+let blackTurn = true;
+$(function() {
+
+    // 初期配置セット
+    setInitialPosition();
+
+    // 配置
+    $("td").click(function() {
+        color = (blackTurn)? "black"  : "white";
+
+        // 緑じゃないマスには置けません
+        if (!$(this).attr("class").match(/green/)) {
+            alert("そこだめ");
+            return;
+        }
+        // ひっくり返せるマス配列を取得
+        let reversibleCells = getReversibleCells($(this), blackTurn);
+        // 配列が空の場合は置けません
+        if (reversibleCells.length == 0) {
+            alert("そこだめ");
+            return;
+        }
+
+        // OKなマスには色を反映
+        // あといろいろ
+        $(this).removeClass("green");
+        $(this).addClass(color);
+        setColor(reversibleCells, blackTurn);
+
+        blackTurn = !blackTurn;
+        const turnText = (blackTurn)? "黒" : "白";
+        $("h3 span").text(turnText);
+        
+        const tableId = (blackTurn)? "black" : "white";
+        $("table").attr("id", tableId);
+
+        // 終わったら判定
+        if ($("td.green").length == 0) {
+            doJudge();
+        }
+    });
+
+    // パス
+    $("button[name='btnPass']").click(function() {
+        blackTurn = !blackTurn;
+        const turnText = (blackTurn)? "黒" : "白";
+        $("h3 span").text(turnText);
+        const tableId = (blackTurn)? "black" : "white";
+        $("table").attr("id", tableId);
+    });
+
+    // 判定
+    $("button[name='btnJudge']").click(function() {
+        doJudge();
+    });
+});
+
+// 判定
+function doJudge() {
+    const blackNum = $("td.black").length;
+    const whiteNum = $("td.white").length;
+
+    let message = "黒：" + blackNum + ", 白：" + whiteNum + "で、";
+    if (blackNum > whiteNum) {
+        message += "黒の勝利";
+    } else if (blackNum < whiteNum) {
+        message += "白の勝利";
+    } else {
+        message += "引き分け";
+    }
+    $("h3").text(message);
+}
+
+// 初期配置を設定
+function setInitialPosition() {
+    // リセット
+    $("td").addClass("green");
+    // 黒
+    $(".col3.line4").addClass("black");
+    $(".col3.line4").removeClass("green");
+    $(".col4.line3").addClass("black");
+    $(".col4.line3").removeClass("green");
+    // 白
+    $(".col3.line3").addClass("white");
+    $(".col3.line3").removeClass("green");
+    $(".col4.line4").addClass("white");
+    $(".col4.line4").removeClass("green");
+}
+
+// そこに置けるか判定
+function setOK(element) {
+    const classes = element.attr("class");
+    return false;
+
+}
+
+// ひっくり返すことができるセルを配列で取得
+function getReversibleCells(element, blackTurn) {
+    const yourColor = (blackTurn)? "black" : "white";
+    const enemyColor = (!blackTurn)? "black" : "white";
+
+    const classes = element.attr("class");
+    // [行番号, 列番号]にする
+    let array = classes.split(" ");
+    array.pop();
+    const col = Number(array[0].replace("col", ""));
+    const line = Number(array[1].replace("line", ""));
+    
+    let reversibleCells = new Array();
+
+    // -------
+    // 横方向
+    // -------
+    // 左へ
+    let innerArray = new Array();
+    for (let i = line-1; i >= 1; i--) {
+        const searchClasses = ".col" + col + ".line" + i;
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    // 右へ
+    innerArray = new Array();
+    for (let i = line+1; i <= 6; i++) {
+        const searchClasses = ".col" + col + ".line" + i;
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    
+    // -------
+    // 縦方向
+    // -------
+    // 上へ
+    innerArray = new Array();
+    for (let i = col-1; i >= 1; i--) {
+        const searchClasses = ".col" + i + ".line" + line;
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    // 下へ
+    innerArray = new Array();
+    for (let i = col+1; i <= 6; i++) {
+        const searchClasses = ".col" + i + ".line" + line;
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    
+    // -------
+    // 斜め方向
+    // -------
+    // 左上
+    innerArray = new Array();
+    for (let i = 1; i <= 6; i++) {
+        if ((col - i) < 1 || (line - i) < 1) {
+            break;
+        }
+        const searchClasses = ".col" + (col - i) + ".line" + (line - i);
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    // 右上
+    innerArray = new Array();
+    for (let i = 1; i <= 6; i++) {
+        if ((col - i) < 1 || (line + i) > 6) {
+            break;
+        }
+        const searchClasses = ".col" + (col - i) + ".line" + (line + i);
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    // 右下
+    innerArray = new Array();
+    for (let i = 1; i <= 6; i++) {
+        if ((col + i) > 6 || (line + i) > 6) {
+            break;
+        }
+        const searchClasses = ".col" + (col + i) + ".line" + (line + i);
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+    }
+    // 左下
+    innerArray = new Array();
+    for (let i = 1; i <= 6; i++) {
+        if ((col + i) > 6 || (line - i) < 1) {
+            break;
+        }
+        const searchClasses = ".col" + (col + i) + ".line" + (line - i);
+        if ($(searchClasses).attr("class").indexOf(enemyColor) != -1) {
+            innerArray.push(searchClasses);
+        } else if ($(searchClasses).attr("class").indexOf(yourColor) != -1) {
+            for (element of innerArray) {
+                reversibleCells.push(element);
+            }
+            break;
+        } else {
+            break;
+        }
+
+    }
+    return reversibleCells;
+}
+// ひっくり返せるセルに色を反映する
+function setColor(reversibleCells, blackTurn) {
+    const yourColor = (blackTurn)? "black" : "white";
+    const enemyColor = (!blackTurn)? "black" : "white";
+    // クラス削除・追加
+    for (element of reversibleCells) {
+        $(element).removeClass(enemyColor);
+        $(element).addClass(yourColor);
+    }
+}
+</script>
+</body>
+</html>
